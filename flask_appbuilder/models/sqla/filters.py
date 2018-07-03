@@ -2,7 +2,8 @@ import logging
 import datetime
 from dateutil import parser
 from flask_babel import lazy_gettext
-from ..filters import BaseFilter, FilterRelation, BaseFilterConverter
+from ..filters import BaseFilter, FilterRelation, BaseFilterConverter, FilterGroup
+from sqlalchemy import or_
 
 log = logging.getLogger(__name__)
 
@@ -56,18 +57,42 @@ def set_value_to_type(datamodel, column_name, value):
     return value
 
 
+class FilterOr(FilterGroup):
+    def apply(self, query):
+        if len(self.sub_filters) > 1:
+            member_list = []
+            for item in self.sub_filters:
+                column_name, filter_class, value = item
+                flt = filter_class(column_name, self.filter.datamodel)
+                query, member = flt.apply(query, value, True)
+                member_list.append(member)
+
+            query = query.filter(or_(*member_list))
+        elif len(self.sub_filters) == 1:
+            column_name, filter_class, value = self.sub_filters[0]
+            flt = filter_class(column_name, self.filter.datamodel)
+            query = flt.apply(query, value)
+
+        return query
+
+
 class FilterStartsWith(BaseFilter):
     name = lazy_gettext('Starts with')
 
-    def apply(self, query, value):
-        query, field = get_field_setup_query(query, self.model, self.column_name)
-        return query.filter(field.like(value + '%'))
+    def apply(self, query, value, for_or=False):
+        if not for_or:
+            query, field = get_field_setup_query(query, self.model, self.column_name)
+            return query.filter(field.like(value + '%'))
+        else:
+            query, field = get_field_setup_query(query, self.model, self.column_name)
+            return query, field.like(value + '%')
+
 
 
 class FilterNotStartsWith(BaseFilter):
     name = lazy_gettext('Not Starts with')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(~field.like(value + '%'))
 
@@ -75,7 +100,7 @@ class FilterNotStartsWith(BaseFilter):
 class FilterEndsWith(BaseFilter):
     name = lazy_gettext('Ends with')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(field.like('%' + value))
 
@@ -83,7 +108,7 @@ class FilterEndsWith(BaseFilter):
 class FilterNotEndsWith(BaseFilter):
     name = lazy_gettext('Not Ends with')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(~field.like('%' + value))
 
@@ -91,7 +116,7 @@ class FilterNotEndsWith(BaseFilter):
 class FilterContains(BaseFilter):
     name = lazy_gettext('Contains')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(field.like('%' + value + '%'))
 
@@ -99,7 +124,7 @@ class FilterContains(BaseFilter):
 class FilterNotContains(BaseFilter):
     name = lazy_gettext('Not Contains')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(~field.like('%' + value + '%'))
 
@@ -107,7 +132,7 @@ class FilterNotContains(BaseFilter):
 class FilterEqual(BaseFilter):
     name = lazy_gettext('Equal to')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field == value)
@@ -116,7 +141,7 @@ class FilterEqual(BaseFilter):
 class FilterNotEqual(BaseFilter):
     name = lazy_gettext('Not Equal to')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field != value)
@@ -125,7 +150,7 @@ class FilterNotEqual(BaseFilter):
 class FilterGreater(BaseFilter):
     name = lazy_gettext('Greater than')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field > value)
@@ -134,7 +159,7 @@ class FilterGreater(BaseFilter):
 class FilterSmaller(BaseFilter):
     name = lazy_gettext('Smaller than')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         value = set_value_to_type(self.datamodel, self.column_name, value)
         return query.filter(field < value)
@@ -143,7 +168,7 @@ class FilterSmaller(BaseFilter):
 class FilterRelationOneToManyEqual(FilterRelation):
     name = lazy_gettext('Relation')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         rel_obj = self.datamodel.get_related_obj(self.column_name, value)
         return query.filter(field == rel_obj)
@@ -152,7 +177,7 @@ class FilterRelationOneToManyEqual(FilterRelation):
 class FilterRelationOneToManyNotEqual(FilterRelation):
     name = lazy_gettext('No Relation')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         rel_obj = self.datamodel.get_related_obj(self.column_name, value)
         return query.filter(field != rel_obj)
@@ -161,7 +186,7 @@ class FilterRelationOneToManyNotEqual(FilterRelation):
 class FilterRelationManyToManyEqual(FilterRelation):
     name = lazy_gettext('Relation as Many')
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         rel_obj = self.datamodel.get_related_obj(self.column_name, value)
         return query.filter(field.contains(rel_obj))
@@ -170,7 +195,7 @@ class FilterRelationManyToManyEqual(FilterRelation):
 class FilterEqualFunction(BaseFilter):
     name = "Filter view with a function"
 
-    def apply(self, query, func):
+    def apply(self, query, func, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(field == func())
 
@@ -178,7 +203,7 @@ class FilterEqualFunction(BaseFilter):
 class FilterInFunction(BaseFilter):
     name = "Filter view where field is in a list returned by a function"
 
-    def apply(self, query, func):
+    def apply(self, query, func, for_or=False):
         query, field = get_field_setup_query(query, self.model, self.column_name)
         return query.filter(field.in_(func()))
 
@@ -244,5 +269,3 @@ class SQLAFilterConverter(BaseFilterConverter):
                                          FilterSmaller,
                                          FilterNotEqual]),
     )
-
-

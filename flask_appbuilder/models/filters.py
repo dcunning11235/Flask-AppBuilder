@@ -36,7 +36,7 @@ class BaseFilter(object):
         self.model = datamodel.obj
         self.is_related_view = is_related_view
 
-    def apply(self, query, value):
+    def apply(self, query, value, for_or=False):
         """
             Override this to implement your own new filters
         """
@@ -51,6 +51,27 @@ class FilterRelation(BaseFilter):
         Base class for all filters for relations
     """
     pass
+
+class FilterGroup(object):
+    """
+        Base class for all single-level groups of filters
+    """
+    def __init__(self, *filters):
+        '''
+        for flt in filters:
+            if not isinstance(flt, tuple):
+                raise TypeError("All arguments to FilterGroup must be of base type BaseFilter")
+        '''
+        self.sub_filters = list(filters)
+
+    def set_filter(self, filter):
+        self.filter = filter
+
+    def apply(self, query):
+        """
+            Override this to implement the group filter
+        """
+        raise NotImplementedError
 
 
 class BaseFilterConverter(object):
@@ -148,8 +169,12 @@ class Filters(object):
 
     def add_filter_list(self, active_filter_list=None):
         for item in active_filter_list:
-            column_name, filter_class, value = item
-            self._add_filter(filter_class(column_name, self.datamodel), value)
+            if issubclass(type(item), FilterGroup):
+                item.set_filter(self)
+                self._add_filter(item, None)
+            else:
+                column_name, filter_class, value = item
+                self._add_filter(filter_class(column_name, self.datamodel), value)
         return self
 
     def get_joined_filters(self, filters):
@@ -204,7 +229,10 @@ class Filters(object):
 
     def apply_all(self, query):
         for flt, value in zip(self.filters, self.values):
-            query = flt.apply(query, value)
+            if isinstance(flt, FilterGroup):
+                query = flt.apply(query)
+            else:
+                query = flt.apply(query, value)
         return query
 
     def __repr__(self):
