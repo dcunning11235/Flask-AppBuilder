@@ -56,13 +56,15 @@ class FilterGroup(object):
     """
         Base class for all single-level groups of filters
     """
-    def __init__(self, *filters):
+    def __init__(self, is_applied, *filters):
         '''
         for flt in filters:
             if not isinstance(flt, tuple):
                 raise TypeError("All arguments to FilterGroup must be of base type BaseFilter")
         '''
         self.sub_filters = list(filters)
+        self.is_applied = is_applied
+        self.is_related_view = False
 
     def set_filter(self, filter):
         self.filter = filter
@@ -228,11 +230,13 @@ class Filters(object):
         return [(flt.column_name, as_unicode(flt.name), value) for flt, value in zip(self.filters, self.values)]
 
     def apply_all(self, query):
+        joins = set()
+
         for flt, value in zip(self.filters, self.values):
             if isinstance(flt, FilterGroup):
-                query = flt.apply(query)
+                query = flt.apply(query, joins)
             else:
-                query = flt.apply(query, value)
+                query = flt.apply(query, value, joins=joins)
         return query
 
     def __repr__(self):
