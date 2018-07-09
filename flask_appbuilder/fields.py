@@ -55,7 +55,7 @@ class AJAXSelectField(Field):
 
         :param valuelist: A list of strings to process.
         """
-        if valuelist:
+        if valuelist and valuelist[0] and str(valuelist[0]).strip() != '' :
             if self.is_related:
                 self.data = self.datamodel.get_related_interface(self.col_name).get(valuelist[0])
             else:
