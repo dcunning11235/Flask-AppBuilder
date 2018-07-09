@@ -807,7 +807,8 @@ class BaseCRUDView(BaseModelView):
                                            pks=pks,
                                            actions=actions,
                                            filters=filters,
-                                           modelview_name=self.__class__.__name__)
+                                           modelview_name=self.__class__.__name__,
+                                           **self.extra_args)
         return widgets
 
     def _get_show_widget(self, pk, item, widgets=None, actions=None, show_fieldsets=None):
@@ -821,7 +822,8 @@ class BaseCRUDView(BaseModelView):
                                            formatters_columns=self.formatters_columns,
                                            actions=actions,
                                            fieldsets=show_fieldsets,
-                                           modelview_name=self.__class__.__name__
+                                           modelview_name=self.__class__.__name__,
+                                           **self.extra_args
         )
         return widgets
 
@@ -831,7 +833,8 @@ class BaseCRUDView(BaseModelView):
         widgets['add'] = self.add_widget(form=form,
                                          include_cols=self.add_columns,
                                          exclude_cols=exclude_cols,
-                                         fieldsets=self.add_fieldsets
+                                         fieldsets=self.add_fieldsets,
+                                         **self.extra_args
         )
         return widgets
 
@@ -841,7 +844,8 @@ class BaseCRUDView(BaseModelView):
         widgets['edit'] = self.edit_widget(form=form,
                                            include_cols=self.edit_columns,
                                            exclude_cols=exclude_cols,
-                                           fieldsets=self.edit_fieldsets
+                                           fieldsets=self.edit_fieldsets,
+                                           **self.extra_args
         )
         return widgets
 
