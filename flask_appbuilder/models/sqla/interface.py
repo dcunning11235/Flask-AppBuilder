@@ -425,11 +425,8 @@ class SQLAInterface(BaseInterface):
         if col_name not in self.list_properties:
             names = col_name.split('.')
             rel_model = self.list_properties[names[0]].mapper.class_
-            print("Base model: {}".format(rel_model))
             for name in names[1:]:
-                print("Next: {}".format(name))
                 rel_model = getattr(rel_model, name).mapper.class_
-                print("Next got: {}".format(rel_model))
             return rel_model
         else:
             return self.list_properties[col_name].mapper.class_
