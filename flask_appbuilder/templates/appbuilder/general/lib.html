@@ -185,7 +185,7 @@
 {% endmacro %}
 
 
-{% macro render_field(field, begin_sep_label='', end_sep_label='', begin_sep_field='', end_sep_field='') %}
+{% macro render_field(field, begin_sep_label='', end_sep_label='', begin_sep_field='', end_sep_field='', extra_html='') %}
 	  {% if field.id != 'csrf_token' %}
           {% if field.type == 'HiddenField' %}
             {{ field}}
@@ -200,6 +200,7 @@
             {{end_sep_label|safe}}
             {{begin_sep_field|safe}}
                 {{ field(**kwargs)|safe }}
+								{{ extra_html|safe }}
                <span class="help-block">{{ field.description }}</span>
           {% endif %}
           {% if field.errors %}
@@ -340,4 +341,3 @@
         <i class="fa fa-eraser"></i>
     </a>
 {% endmacro %}
-
