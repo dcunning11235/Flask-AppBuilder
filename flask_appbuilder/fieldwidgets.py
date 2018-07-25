@@ -146,7 +146,7 @@ class Select2Widget(widgets.Select):
         return super(Select2Widget, self).__init__()
 
     def __call__(self, field, **kwargs):
-        kwargs['class'] = u'my_select2 form-control'
+        kwargs['class'] = u'my_select2' #form-control
         if self.extra_classes:
             kwargs['class'] = kwargs['class'] + ' ' + self.extra_classes
         kwargs['style'] = self.style
@@ -165,7 +165,7 @@ class Select2ManyWidget(widgets.Select):
         return super(Select2ManyWidget, self).__init__()
 
     def __call__(self, field, **kwargs):
-        kwargs['class'] = u'my_select2 form-control'
+        kwargs['class'] = u'my_select2' #form-control'
         if self.extra_classes:
             kwargs['class'] = kwargs['class'] + ' ' + self.extra_classes
         kwargs['style'] = self.style
