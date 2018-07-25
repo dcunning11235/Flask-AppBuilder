@@ -55,7 +55,7 @@ class AJAXSelectField(Field):
 
         :param valuelist: A list of strings to process.
         """
-        if valuelist:
+        if valuelist and valuelist[0] and str(valuelist[0]).strip() != '' :
             if self.is_related:
                 self.data = self.datamodel.get_related_interface(self.col_name).get(valuelist[0])
             else:
@@ -198,7 +198,7 @@ class EnumField(SelectField):
     The meaning of enum_class and enums is the same as for attributes on sqlalchemy.types.Enum:
 
     :param enum_class: either None or a subclass of Python enum.Enum
-    :param enums: a sequence of strings, if enum_class is not Null than it should be 
+    :param enums: a sequence of strings, if enum_class is not Null than it should be
                   `list(enum_class.__members__)`
     """
 
