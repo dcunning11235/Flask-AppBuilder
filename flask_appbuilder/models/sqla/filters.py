@@ -22,7 +22,7 @@ def get_field_setup_query(query, model, column_name):
     """
     if not hasattr(model, column_name):
         # it's an inner obj attr
-        print("*****Passed model: " + model)
+        print("*****Passed model: " + str(model))
         print("*****Passed column_name: " + column_name)
         rel_model = getattr(model, column_name.split('.')[0]).mapper.class_
         query = query.join(rel_model)
