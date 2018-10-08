@@ -21,7 +21,9 @@ def get_field_setup_query(query, model, column_name):
             Contact.created_by: if created_by is a User model, it will be joined to the query.
     """
     if not hasattr(model, column_name):
-       # it's an inner obj attr
+        # it's an inner obj attr
+        print("*****Passed model: " + model)
+        print("*****Passed column_name: " + column_name)
         rel_model = getattr(model, column_name.split('.')[0]).mapper.class_
         query = query.join(rel_model)
         return query, getattr(rel_model, column_name.split('.')[1])
@@ -244,5 +246,3 @@ class SQLAFilterConverter(BaseFilterConverter):
                                          FilterSmaller,
                                          FilterNotEqual]),
     )
-
-
